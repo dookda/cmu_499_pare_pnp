@@ -40,7 +40,7 @@ const Page2 = () => {
         today.getDay() === 0 || today.getDay() === 6 ? "Weekend" : "Workday";
 
       const res = await fetch(
-        `http://127.0.0.1:6515/pnp_api/predict_v3?day_type=${day_type}&traffic_time=${traffic_time}&idw_temp=${idw_temp}`
+        `https://geodev.fun/pnp_api/predict_v3?day_type=${day_type}&traffic_time=${traffic_time}&idw_temp=${idw_temp}`
       );
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -60,7 +60,7 @@ const Page2 = () => {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:6515/pnp_api/traffic/getroute?lat=${start.lat}&lng=${start.lng}&end_lat=${end.lat}&end_lng=${end.lng}`
+        `https://geodev.fun/pnp_api/traffic/getroute?lat=${start.lat}&lng=${start.lng}&end_lat=${end.lat}&end_lng=${end.lng}`
       );
       const trafficData = await res.json();
       if (trafficData.error) {
@@ -80,7 +80,7 @@ const Page2 = () => {
       setTrafficData({ ...trafficData, diff });
 
       const idwRes = await fetch(
-        "http://127.0.0.1:6515/pnp_api/idw_route_mean",
+        "https://geodev.fun/pnp_api/idw_route_mean",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

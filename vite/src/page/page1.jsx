@@ -6888,7 +6888,7 @@ const Page1 = () => {
     pointArr.forEach(async (i) => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:6515/pnp_api/traffic/getroute?lat=${i.start[0]}&lng=${i.start[1]}&end_lat=${i.end[0]}&end_lng=${i.end[1]}`
+          `https://geodev.fun/pnp_api/traffic/getroute?lat=${i.start[0]}&lng=${i.start[1]}&end_lat=${i.end[0]}&end_lng=${i.end[1]}`
         );
         if (response.status === 204) {
           console.log("Skip short route:", i.name);

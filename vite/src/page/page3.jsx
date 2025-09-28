@@ -66,12 +66,7 @@ const Page3 = () => {
   useEffect(() => {
     const fetchStations = async () => {
       try {
-        const BASE_URL =
-          window.location.hostname === "localhost"
-            ? "http://localhost:6515"
-            : "http://pnp_python:6515";
-
-        const res = await fetch(`${BASE_URL}/pnp_api/aqicn_points`);
+        const res = await fetch(`https://geodev.fun/pnp_api/aqicn_points`);
         const data = await res.json();
         if (!data.error) {
           setStations(data.stations || []);

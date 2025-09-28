@@ -12,20 +12,17 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 
-
-
-
 # -----------------------
 # CONFIG
 # -----------------------
-GOOGLE_API_KEY   = "AIzaSyDz7XeV2UKhACZL1A7KHEk0uZc_HlP0j6w"
-AQICN_TOKEN      = "d895365a9f624ee0efa68bc4b5805aad2dbadb6f"
-ANN_MODEL_PATH   = "ann_temp_v3.joblib"
+GOOGLE_API_KEY = "AIzaSyCB6pMIV8UkL4BwSmEeuPy08GH3ZH5FTes"
+AQICN_TOKEN = "d895365a9f624ee0efa68bc4b5805aad2dbadb6f"
+ANN_MODEL_PATH = "ann_temp_v3.joblib"
 
 AQICN_FEED_IDS = [
-    "A99496","A344371","A104236","A104221","A365722","A532975","A369997",
-    "A370795","A370798","A196417","A403297","A531862","A528604","A476029",
-    "@1822","@5775","@6817",
+    "A99496", "A344371", "A104236", "A104221", "A365722", "A532975", "A369997",
+    "A370795", "A370798", "A196417", "A403297", "A531862", "A528604", "A476029",
+    "@1822", "@5775", "@6817",
 ]
 
 app = FastAPI()
@@ -42,6 +39,8 @@ app.add_middleware(
 # -----------------------
 # Utility functions
 # -----------------------
+
+
 def parse_minutes(text: str) -> int:
     """แปลงข้อความเวลา (เช่น '1 hour 20 mins') เป็นนาที"""
     import re
@@ -53,14 +52,16 @@ def parse_minutes(text: str) -> int:
     mins = int(m.group(1)) if m else 0
     return hours + mins
 
+
 def haversine(lat1, lon1, lat2, lon2) -> float:
     """คำนวณระยะทางระหว่าง 2 จุด (km)"""
     R = 6371.0
     p1, p2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
-    dl   = math.radians(lon2 - lon1)
+    dl = math.radians(lon2 - lon1)
     a = math.sin(dphi/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
 
 def fetch_aqicn_realtime():
     """ดึงข้อมูลอุณหภูมิ real-time จาก AQICN"""
@@ -87,9 +88,11 @@ def fetch_aqicn_realtime():
             continue
     return stations
 
+
 def infer_day_type_now():
     wd = datetime.now().weekday()
     return "Weekend" if wd in (5, 6) else "Workday"
+
 
 def idw_value(lat, lng, stations, power=2, eps=1e-9):
     """คำนวณค่า IDW ที่จุด lat,lng"""
@@ -102,6 +105,7 @@ def idw_value(lat, lng, stations, power=2, eps=1e-9):
         ws.append(w)
         vs.append(s["temp"])
     return float(np.dot(ws, vs) / (np.sum(ws) if np.sum(ws) else 1))
+
 
 # -----------------------
 # โหลด ANN model
@@ -116,9 +120,12 @@ except Exception as e:
 # -----------------------
 # Endpoints
 # -----------------------
+
+
 @app.get("/")
 async def home():
     return {"ok": True, "message": "Backend running with FastAPI"}
+
 
 @app.get("/pnp_api/traffic/getroute")
 async def traffic_getroute(lat: float, lng: float, end_lat: float, end_lng: float):
@@ -137,10 +144,11 @@ async def traffic_getroute(lat: float, lng: float, end_lat: float, end_lng: floa
         return JSONResponse(content={"error": data.get("status", "UNKNOWN_ERROR")}, status_code=502)
 
     route = data["routes"][0]
-    leg   = route["legs"][0]
+    leg = route["legs"][0]
     coords = polyline.decode(route["overview_polyline"]["points"])
     normal_minutes = parse_minutes(leg["duration"]["text"])
-    traffic_minutes = parse_minutes(leg.get("duration_in_traffic", {}).get("text", leg["duration"]["text"]))
+    traffic_minutes = parse_minutes(
+        leg.get("duration_in_traffic", {}).get("text", leg["duration"]["text"]))
     time_diff = traffic_minutes - normal_minutes
 
     return {
@@ -152,6 +160,7 @@ async def traffic_getroute(lat: float, lng: float, end_lat: float, end_lng: floa
         "diff_color": "red" if time_diff > 0 else "green" if time_diff < 0 else "yellow",
         "fetch_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
 
 @app.post("/pnp_api/idw_route_mean")
 async def idw_route_mean(payload: dict = Body(...)):
@@ -176,6 +185,7 @@ async def idw_route_mean(payload: dict = Body(...)):
 
     mean_idw = float(np.mean(vals))
     return {"idw_temp": round(mean_idw, 2), "n_samples": len(samples)}
+
 
 @app.get("/pnp_api/predict_v3")
 async def predict_v3(
@@ -211,6 +221,8 @@ async def predict_v3(
         "predicted_temp": round(pred, 2),
         "unit": "°C"
     }
+
+
 @app.get("/pnp_api/aqicn_points")
 async def aqicn_points():
     stations = []
@@ -225,7 +237,8 @@ async def aqicn_points():
             city = j["data"].get("city", {})
             iaqi = j["data"].get("iaqi", {})
             temp = iaqi.get("t", {}).get("v", None)
-            time_info = j["data"].get("time", {}).get("s", None)  # ✅ เวลา observation ของสถานี
+            time_info = j["data"].get("time", {}).get(
+                "s", None)  # ✅ เวลา observation ของสถานี
 
             if temp is None or not city.get("geo"):
                 continue
@@ -245,10 +258,12 @@ async def aqicn_points():
         return JSONResponse(content={"error": "No data"}, status_code=500)
 
     # ✅ เวลาไทยตอน server fetch
-    fetch_time = datetime.now(ZoneInfo("Asia/Bangkok")).strftime("%Y-%m-%d %H:%M:%S")
+    fetch_time = datetime.now(ZoneInfo("Asia/Bangkok")
+                              ).strftime("%Y-%m-%d %H:%M:%S")
 
     return {
-        "stations": stations,   # ✅ เก็บเป็น object [{lat, lng, temp, station_time}, ...]
+        # ✅ เก็บเป็น object [{lat, lng, temp, station_time}, ...]
+        "stations": stations,
         "count": len(stations),
         "fetch_time": fetch_time
     }
